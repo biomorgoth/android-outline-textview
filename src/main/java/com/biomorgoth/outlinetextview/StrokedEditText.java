@@ -23,6 +23,8 @@ public class StrokedEditText extends EditText {
     // fields
     private int _strokeColor;
     private float _strokeWidth;
+    private int _hintStrokeColor;
+    private float _hintStrokeWidth;
     private boolean isDrawing;
     private Bitmap altBitmap;
     private Canvas altCanvas;
@@ -49,13 +51,20 @@ public class StrokedEditText extends EditText {
                     getCurrentTextColor());
             _strokeWidth = a.getFloat(R.styleable.StrokedTextAttrs_textStrokeWidth,
                     DEFAULT_STROKE_WIDTH);
+            _hintStrokeColor = a.getColor(R.styleable.StrokedTextAttrs_textHintStrokeColor,
+                    getCurrentHintTextColor());
+            _hintStrokeWidth = a.getFloat(R.styleable.StrokedTextAttrs_textHintStrokeWidth,
+                    DEFAULT_STROKE_WIDTH);
 
             a.recycle();
         } else {
             _strokeColor = getCurrentTextColor();
             _strokeWidth = DEFAULT_STROKE_WIDTH;
+            _hintStrokeColor = getCurrentHintTextColor();
+            _hintStrokeWidth = DEFAULT_STROKE_WIDTH;
         }
         setStrokeWidth(_strokeWidth);
+        setHintStrokeWidth(_hintStrokeWidth);
     }
 
     @Override
@@ -65,6 +74,17 @@ public class StrokedEditText extends EditText {
         // creating an infinite loop)
         if(isDrawing) return;
         super.invalidate();
+    }
+
+    public void setHintStrokeColor(int color) {
+        _hintStrokeColor = color;
+    }
+
+    public void setHintStrokeWidth(float width) {
+        //convert values specified in dp in XML layout to
+        //px, otherwise stroke width would appear different
+        //on different screens
+        _hintStrokeWidth = ConvertUtil.spToPx(getContext(), width);
     }
 
     public void setStrokeColor(int color) {
@@ -82,7 +102,8 @@ public class StrokedEditText extends EditText {
     @SuppressLint("DrawAllocation")
     @Override
     protected void onDraw(Canvas canvas) {
-        if(_strokeWidth > 0) {
+        boolean paintHint = getHint() != null && getText().length() == 0;
+        if((paintHint && _hintStrokeWidth > 0) || (!paintHint && _strokeWidth > 0)) {
             isDrawing = true;
             if(altBitmap == null) {
                 altBitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
@@ -93,26 +114,34 @@ public class StrokedEditText extends EditText {
                 altBitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
                 altCanvas.setBitmap(altBitmap);
             }
-            //set paint to fill mode
-            Paint p = getPaint();
-            p.setStyle(Paint.Style.FILL);
             //draw the fill part of text
             super.onDraw(canvas);
             //save the text color
-            int currentTextColor = getCurrentTextColor();
+            int currentTextColor = paintHint ? getCurrentHintTextColor() : getCurrentTextColor();
             //clear alternate canvas
             altBitmap.eraseColor(Color.TRANSPARENT);
             //set paint to stroke mode and specify
             //stroke color and width
+            Paint p = getPaint();
             p.setStyle(Paint.Style.STROKE);
             p.setStrokeWidth(_strokeWidth);
-            setTextColor(_strokeColor);
+            if(paintHint) {
+                setHintTextColor(_hintStrokeColor);
+            } else {
+                setTextColor(_strokeColor);
+            }
             //draw text stroke
             super.onDraw(altCanvas);
             canvas.drawBitmap(altBitmap, 0, 0, null);
             //revert the color back to the one
             //initially specified
-            setTextColor(currentTextColor);
+            if(paintHint) {
+                setHintTextColor(currentTextColor);
+            } else {
+                setTextColor(currentTextColor);
+            }
+            //set paint to fill mode (restore)
+            p.setStyle(Paint.Style.FILL);
             isDrawing = false;
         } else {
             super.onDraw(canvas);
