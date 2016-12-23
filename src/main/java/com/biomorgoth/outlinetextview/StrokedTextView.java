@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.widget.TextView;
 
 /**
@@ -82,6 +83,11 @@ public class StrokedTextView extends TextView {
         //px, otherwise stroke width would appear different
         //on different screens
         _strokeWidth = ConvertUtil.spToPx(getContext(), width);
+    }
+
+    public void setStrokeWidth(int unit, float width) {
+        _strokeWidth = TypedValue.applyDimension(
+                unit, width, getContext().getResources().getDisplayMetrics());
     }
 
     // overridden methods

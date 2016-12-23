@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.widget.EditText;
 
 /**
@@ -99,6 +100,11 @@ public class StrokedEditText extends EditText {
         _hintStrokeWidth = ConvertUtil.spToPx(getContext(), width);
     }
 
+    public void setHintStrokeWidth(int unit, float width) {
+        _hintStrokeWidth = TypedValue.applyDimension(
+                unit, width, getContext().getResources().getDisplayMetrics());
+    }
+
     public void setStrokeColor(int color) {
         _strokeColor = color;
     }
@@ -108,6 +114,11 @@ public class StrokedEditText extends EditText {
         //px, otherwise stroke width would appear different
         //on different screens
         _strokeWidth = ConvertUtil.spToPx(getContext(), width);
+    }
+
+    public void setStrokeWidth(int unit, float width) {
+        _strokeWidth = TypedValue.applyDimension(
+                unit, width, getContext().getResources().getDisplayMetrics());
     }
 
     // overridden methods
@@ -136,10 +147,11 @@ public class StrokedEditText extends EditText {
             //stroke color and width
             Paint p = getPaint();
             p.setStyle(Paint.Style.STROKE);
-            p.setStrokeWidth(_strokeWidth);
             if(paintHint) {
+                p.setStrokeWidth(_hintStrokeWidth);
                 setHintTextColor(_hintStrokeColor);
             } else {
+                p.setStrokeWidth(_strokeWidth);
                 setTextColor(_strokeColor);
             }
             //draw text stroke
